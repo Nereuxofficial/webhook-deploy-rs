@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use tokio::fs;
 
-async fn load_configs() -> HashMap<Uri, Application> {
+pub(crate) async fn load_configs() -> HashMap<Uri, Application> {
     let mut files = fs::read_dir("configs").await.unwrap();
     let mut configs = HashMap::new();
     while let Some(file) = files.next_entry().await.unwrap() {

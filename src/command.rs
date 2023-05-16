@@ -15,13 +15,16 @@ enum Success {
 /// to kill the process when the parent dies. or kill it after this function returns. So if the
 /// server exit's it returns the exit code. If the server is still running it returns Success::Running
 async fn execute_and_monitor(path: &str) -> Success {
-    let mut child = match Command::new(path).spawn() {
+    let mut command = Command::new("sh");
+    command.args(&["-c", &format!("nohup {} &", path)]);
+
+    let mut child = match command.stdout(Stdio::piped()).spawn() {
         Ok(child) => child,
         Err(_) => return Success::Exited(-1),
     };
 
     let start = Instant::now();
-    let timeout = Duration::from_secs(30);
+    let timeout = Duration::from_secs(10);
     let mut reader = BufReader::new(child.stdout.take().unwrap());
 
     let mut line = String::new();
