@@ -65,9 +65,10 @@ async fn main() -> color_eyre::Result<()> {
     dotenvy::dotenv().ok();
     // Webserver using actix-web
     info!("Starting webserver");
-    HttpServer::new(|| {
+    let configs = load_configs().await;
+    HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(|| async move { load_configs().await }))
+            .app_data(web::Data::new(configs.clone()))
             .service(index)
             .service(payload)
     })
