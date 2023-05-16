@@ -1,4 +1,3 @@
-[service]
-remote = "https://github.com/username/project-name.git"
-restart_script = "/path/to/restart.sh"
+name = "https://github.com/username/project-name.git"
+script = "/path/to/restart.sh"
 secret = "YOUR_SECRET"
