@@ -7,6 +7,8 @@ use actix_web::{get, post, web, App, Error, HttpRequest, HttpResponse, HttpServe
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::env;
+use tracing::info;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 struct Application {
@@ -28,14 +30,19 @@ async fn payload(
     data: web::Data<HashMap<Uri, Application>>,
 ) -> HttpResponse {
     // TODO: Fix unwraps
+    // Get repository URL
+    let body = String::from_utf8(bytes.to_vec()).unwrap();
+    info!("Payload: {}", body);
+    let json: Value = serde_json::from_str(&body).unwrap();
+    let repo_url = json.get("repository");
+    info!("Repo URL: {}", repo_url.unwrap());
     let signature = req
         .headers()
         .get("X-Hub-Signature-256")
         .unwrap()
         .to_str()
         .unwrap();
-    let body = String::from_utf8(bytes.to_vec()).unwrap();
-    let json: Value = serde_json::from_str(&body).unwrap();
+
     HttpResponse::Ok().body("Successfully restarted process!")
 }
 
@@ -50,7 +57,7 @@ async fn main() -> color_eyre::Result<()> {
             .app_data(web::Data::new(|| async move { load_configs().await }))
             .service(index)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(env::var("BIND_IP").unwrap())?
     .run()
     .await
     .unwrap();
