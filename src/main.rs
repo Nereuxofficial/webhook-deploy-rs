@@ -50,14 +50,15 @@ async fn payload(
 
     // Get repository URL
     let body = String::from_utf8(bytes.to_vec()).unwrap();
-    info!("Payload: {}", body);
     let json: Value = serde_json::from_str(&body).unwrap();
+    info!("JSON: {:#?}", json);
     let repo_url: String = json
         .get("repository")
         .unwrap()
         .get("html_url")
         .unwrap()
         .to_string();
+    info!("Repo URL: {}", repo_url);
     info!("Repo URL: {}", repo_url);
     let signature = req
         .headers()
@@ -67,9 +68,8 @@ async fn payload(
         .unwrap();
     info!("Sent Signature: {}", signature);
     // Verify signature
-    let mut hmac = Hmac::<Sha256>::new_from_slice(
-        &data
-            .get(&Uri::from_str(&repo_url).unwrap())
+    let hmac = Hmac::<Sha256>::new_from_slice(
+        data.get(&Uri::from_str(repo_url.trim_matches('"')).unwrap())
             .unwrap()
             .secret
             .as_bytes(),

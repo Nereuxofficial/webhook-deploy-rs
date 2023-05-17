@@ -1,5 +1,5 @@
 use crate::command::Success::{Exited, Running};
-use std::process::{ExitStatus, Stdio};
+use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::time::{sleep, Duration, Instant};
