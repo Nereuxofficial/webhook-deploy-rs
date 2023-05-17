@@ -46,7 +46,12 @@ async fn payload(
     let body = String::from_utf8(bytes.to_vec()).unwrap();
     info!("Payload: {}", body);
     let json: Value = serde_json::from_str(&body).unwrap();
-    let repo_url: String = json.get("html_url").unwrap().to_string();
+    let repo_url: String = json
+        .get("repository")
+        .unwrap()
+        .get("html_url")
+        .unwrap()
+        .to_string();
     info!("Repo URL: {}", repo_url);
     let signature = req
         .headers()
