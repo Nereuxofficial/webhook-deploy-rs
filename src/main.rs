@@ -5,10 +5,15 @@ use crate::config::load_configs;
 use actix_web::http::header::HeaderValue;
 use actix_web::http::Uri;
 use actix_web::{get, post, web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use hmac::digest::FixedOutput;
+use hmac::Hmac;
+use hmac::Mac;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::Sha256;
 use std::collections::HashMap;
 use std::env;
+use std::str::FromStr;
 use tracing::info;
 
 // TODO: If we process the first payload we can inform about new webhooks connected to the server
@@ -33,6 +38,7 @@ async fn payload(
     bytes: web::Bytes,
     data: web::Data<HashMap<Uri, Application>>,
 ) -> HttpResponse {
+    // TODO: Handle unwraps
     if req
         .headers()
         .get("X-GitHub-Event")
@@ -41,7 +47,7 @@ async fn payload(
     {
         return HttpResponse::Ok().body("Not a push event!");
     }
-    // TODO: Handle unwraps
+
     // Get repository URL
     let body = String::from_utf8(bytes.to_vec()).unwrap();
     info!("Payload: {}", body);
@@ -59,7 +65,19 @@ async fn payload(
         .unwrap()
         .to_str()
         .unwrap();
-
+    info!("Sent Signature: {}", signature);
+    // Verify signature
+    let mut hmac = Hmac::<Sha256>::new_from_slice(
+        &data
+            .get(&Uri::from_str(&repo_url).unwrap())
+            .unwrap()
+            .secret
+            .as_bytes(),
+    )
+    .unwrap();
+    let mut result = [0u8; 32];
+    hmac.finalize_into((&mut result).into());
+    info!("Calculated Signature: {:#?}", hex::encode(result));
     HttpResponse::Ok().body("Successfully restarted process!")
 }
 
