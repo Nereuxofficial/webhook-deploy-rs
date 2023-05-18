@@ -59,7 +59,6 @@ async fn payload(
         .unwrap()
         .to_string();
     info!("Repo URL: {}", repo_url);
-    info!("Repo URL: {}", repo_url);
     let signature = req
         .headers()
         .get("X-Hub-Signature-256")
@@ -68,16 +67,16 @@ async fn payload(
         .unwrap();
     info!("Sent Signature: {}", signature);
     // Verify signature
-    let hmac = Hmac::<Sha256>::new_from_slice(
-        data.get(&Uri::from_str(repo_url.trim_matches('"')).unwrap())
-            .unwrap()
-            .secret
-            .as_bytes(),
-    )
-    .unwrap();
+    let secret = &data
+        .get(&Uri::from_str(repo_url.trim_matches('"')).unwrap())
+        .unwrap()
+        .secret;
+    info!("Secret: {}", secret);
+    let hmac = Hmac::<Sha256>::new_from_slice(secret.as_bytes()).unwrap();
     let mut result = [0u8; 32];
     hmac.finalize_into((&mut result).into());
-    info!("Calculated Signature: {:#?}", hex::encode(result));
+    // FIXME: This returns the wrong signature
+    info!("Calculated Signature: {}", hex::encode(result));
     HttpResponse::Ok().body("Successfully restarted process!")
 }
 
